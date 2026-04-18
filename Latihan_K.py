@@ -1,5 +1,3 @@
-import customtkinter as ctk
-from tkinter import messagebox, ttk, filedialog
 import pandas as pd
 import numpy as np
 import os
