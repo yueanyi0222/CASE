@@ -1,9 +1,3 @@
-"""
-SISTEM JURUKUR PRO - MODUL LATIT/DIPAT & LUAS
-Author: [Nama Anda / GitHub Username]
-Description: Aplikasi GUI untuk pengiraan trabas, luas lot, dan eksport data ukur (DXF, CSV, GeoJSON).
-"""
-
 import customtkinter as ctk
 from tkinter import messagebox, ttk, filedialog
 import pandas as pd
@@ -17,7 +11,7 @@ import ezdxf
 
 # --- FUNGSI UTILITI ---
 def resource_path(relative_path):
-    """ Mengendalikan laluan fail untuk aplikasi yang dibundel (PyInstaller) """
+    """ Handle paths for PyInstaller executable and dev environments """
     try:
         base_path = sys._MEIPASS
     except Exception:
@@ -25,7 +19,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def dmss_to_decimal(dmss_float):
-    """ Menukarkan format D.MMSS kepada Decimal Degrees """
+    """ Menukar format D.MMSS kepada Decimal Degrees """
     val = str(dmss_float)
     if "." not in val: return float(val)
     deg = int(float(val))
@@ -35,7 +29,7 @@ def dmss_to_decimal(dmss_float):
     return deg + (m/60) + (s/3600)
 
 def decimal_to_dms_str(dmss_float):
-    """ Menukarkan Decimal Degrees kepada format String DMS (D° M' S") """
+    """ Menukar format Decimal Degrees kepada String DMS (D° M' S") """
     try:
         if dmss_float == "-" or dmss_float is None: return "-"
         val = float(dmss_float)
@@ -50,7 +44,7 @@ def decimal_to_dms_str(dmss_float):
         return str(dmss_float)
 
 def kira_luas(x, y):
-    """ Pengiraan luas menggunakan formula Shoelace (NP Dot Product) """
+    """ Pengiraan luas menggunakan formula Shoelace """
     return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
 # --- APLIKASI UTAMA ---
@@ -98,7 +92,6 @@ class App(ctk.CTk):
         self.info_panel = ctk.CTkFrame(self.main_container, height=60); self.info_panel.pack(side="top", fill="x", padx=10, pady=5)
         
         self.lbl_luas = ctk.CTkLabel(self.info_panel, text="Luas: -", font=("Arial", 16, "bold")); self.lbl_luas.pack(side="left", padx=20)
-        
         self.lbl_skala = ctk.CTkLabel(self.info_panel, text="Skala: -", font=("Arial", 16, "bold"), text_color="#e67e22")
         self.lbl_skala.pack(side="left", padx=20)
         
@@ -107,6 +100,7 @@ class App(ctk.CTk):
         self.display_frame = ctk.CTkFrame(self.main_container); self.display_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
     def hitung_skala(self, x_vals, y_vals):
+        """ Menghitung skala piawai berdasarkan dimensi plot """
         if len(x_vals) == 0: return 0
         lebar_m = np.max(x_vals) - np.min(x_vals)
         tinggi_m = np.max(y_vals) - np.min(y_vals)
@@ -148,7 +142,7 @@ class App(ctk.CTk):
         dipat = f"{row['DIPAT']:.3f}" if row['DIPAT'] != "-" else "-"
         info_msg = (f"📍 STESEN: {row['STN']}\n----------------------------\n"
                     f"Latit (dN) : {latit}\nDipat (dE) : {dipat}\n"
-                    f"Bearing     : {brg}\nJarak       : {dist}\n"
+                    f"Bearing     : {brg}\nJarak        : {dist}\n"
                     f"----------------------------\n"
                     f"Easting (E): {row['E']:.4f}\nNorthing(N): {row['N']:.4f}")
         messagebox.showinfo(f"Maklumat Stesen {row['STN']}", info_msg)
@@ -432,6 +426,4 @@ class App(ctk.CTk):
             for w in self.display_frame.winfo_children(): w.destroy()
 
 if __name__ == "__main__":
-    # Inisialisasi Aplikasi
-    app = App()
-    app.mainloop()
+    App().mainloop()
