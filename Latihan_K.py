@@ -1,3 +1,11 @@
+"""
+SISTEM JURUKUR PRO - MODUL LATIT/DIPAT & LUAS
+Author: [Nama Anda / GitHub Username]
+Description: Aplikasi GUI untuk pengiraan trabas, luas lot, dan eksport data ukur (DXF, CSV, GeoJSON).
+"""
+
+import customtkinter as ctk
+from tkinter import messagebox, ttk, filedialog
 import pandas as pd
 import numpy as np
 import os
@@ -9,6 +17,7 @@ import ezdxf
 
 # --- FUNGSI UTILITI ---
 def resource_path(relative_path):
+    """ Mengendalikan laluan fail untuk aplikasi yang dibundel (PyInstaller) """
     try:
         base_path = sys._MEIPASS
     except Exception:
@@ -16,6 +25,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def dmss_to_decimal(dmss_float):
+    """ Menukarkan format D.MMSS kepada Decimal Degrees """
     val = str(dmss_float)
     if "." not in val: return float(val)
     deg = int(float(val))
@@ -25,6 +35,7 @@ def dmss_to_decimal(dmss_float):
     return deg + (m/60) + (s/3600)
 
 def decimal_to_dms_str(dmss_float):
+    """ Menukarkan Decimal Degrees kepada format String DMS (D° M' S") """
     try:
         if dmss_float == "-" or dmss_float is None: return "-"
         val = float(dmss_float)
@@ -39,6 +50,7 @@ def decimal_to_dms_str(dmss_float):
         return str(dmss_float)
 
 def kira_luas(x, y):
+    """ Pengiraan luas menggunakan formula Shoelace (NP Dot Product) """
     return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
 # --- APLIKASI UTAMA ---
@@ -87,7 +99,6 @@ class App(ctk.CTk):
         
         self.lbl_luas = ctk.CTkLabel(self.info_panel, text="Luas: -", font=("Arial", 16, "bold")); self.lbl_luas.pack(side="left", padx=20)
         
-        # --- TAMBAH: Label Skala di UI ---
         self.lbl_skala = ctk.CTkLabel(self.info_panel, text="Skala: -", font=("Arial", 16, "bold"), text_color="#e67e22")
         self.lbl_skala.pack(side="left", padx=20)
         
@@ -95,18 +106,15 @@ class App(ctk.CTk):
         
         self.display_frame = ctk.CTkFrame(self.main_container); self.display_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
-    # --- TAMBAH: Fungsi Hitung Skala Piawai ---
     def hitung_skala(self, x_vals, y_vals):
         if len(x_vals) == 0: return 0
         lebar_m = np.max(x_vals) - np.min(x_vals)
         tinggi_m = np.max(y_vals) - np.min(y_vals)
         dimensi_maks = max(lebar_m, tinggi_m)
         
-        # Faktor ruang lukisan (anggaran ruang dalam meter pada kertas/skrin)
         ruang_selamat = 0.18 
         skala_mentah = dimensi_maks / ruang_selamat
         
-        # Senarai skala piawai ukur
         skala_piawai = [10, 20, 50, 100, 200, 250, 300, 500, 750, 1000, 1250, 1500, 2000, 2500, 5000]
         for s in skala_piawai:
             if s >= skala_mentah: return s
@@ -158,7 +166,6 @@ class App(ctk.CTk):
         n_points = len(self.df)
         luas = kira_luas(x, y)
         
-        # --- TAMBAH: Update Label Skala di Visualizer ---
         skala_lot = self.hitung_skala(x, y)
         self.lbl_luas.configure(text=f"Luas: {luas:.3f} m²")
         self.lbl_skala.configure(text=f"Skala: 1:{skala_lot}")
@@ -331,11 +338,9 @@ class App(ctk.CTk):
             
             for i in range(n_pts):
                 r = self.df.iloc[i]
-                # Label Stesen
                 msp.add_text(str(r.STN), dxfattribs={'height': base_scale*0.6, 'color': 2}).dxf.insert = (r.E + base_scale*0.2, r.N + base_scale*0.2)
                 msp.add_circle((r.E, r.N), radius=base_scale*0.08)
                 
-                # Label Bearing & Jarak
                 p1_idx = i
                 p2_idx = (i + 1) % n_pts
                 r_label = self.df.iloc[p2_idx]
@@ -364,7 +369,6 @@ class App(ctk.CTk):
                                 dxfattribs={'height': base_scale*0.45, 'rotation': angle, 'color': 1}
                                 ).set_placement(pos_dist, align=ezdxf.enums.TextEntityAlignment.CENTER)
 
-            # --- TAMBAH: Label Luas & SKALA Tengah dalam DXF ---
             luas_m2 = kira_luas(x_vals, y_vals)
             skala_dxf = self.hitung_skala(x_vals, y_vals)
             center_pt = (np.mean(x_vals), np.mean(y_vals))
@@ -428,4 +432,6 @@ class App(ctk.CTk):
             for w in self.display_frame.winfo_children(): w.destroy()
 
 if __name__ == "__main__":
-    App().mainloop()
+    # Inisialisasi Aplikasi
+    app = App()
+    app.mainloop()
